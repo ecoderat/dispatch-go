@@ -4,24 +4,21 @@ import (
 	"log"
 	"time"
 
+	"github.com/ecoderat/dispatch-go/internal/controller"
 	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
 	app := fiber.New()
 
+	ctrl := controller.NewController()
+
 	// Register routes
-	app.Get("/start", func(c *fiber.Ctx) error {
-		return c.SendString("Server started")
-	})
+	app.Get("/start", ctrl.Start)
 
-	app.Get("/stop", func(c *fiber.Ctx) error {
-		return c.SendString("Server stopped")
-	})
+	app.Get("/stop", ctrl.Stop)
 
-	app.Get("/sent-messages", func(c *fiber.Ctx) error {
-		return c.SendString("List of sent messages")
-	})
+	app.Get("/messages", ctrl.GetMessages)
 
 	// Start the scheduler
 	ticker := time.NewTicker(2 * time.Minute)
