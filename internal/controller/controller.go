@@ -23,7 +23,7 @@ func NewMessageController(messageService service.MessageService) MessageControll
 }
 
 func (ctrl *messageController) Start(c *fiber.Ctx) error {
-	err := ctrl.service.Start()
+	err := ctrl.service.Start(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to start server")
 	}
@@ -32,7 +32,7 @@ func (ctrl *messageController) Start(c *fiber.Ctx) error {
 }
 
 func (ctrl *messageController) Stop(c *fiber.Ctx) error {
-	err := ctrl.service.Stop()
+	err := ctrl.service.Stop(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to stop server")
 	}
@@ -41,7 +41,7 @@ func (ctrl *messageController) Stop(c *fiber.Ctx) error {
 }
 
 func (ctrl *messageController) GetMessages(c *fiber.Ctx) error {
-	messages, err := ctrl.service.GetMessages()
+	messages, err := ctrl.service.GetMessages(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to retrieve messages")
 	}

@@ -1,26 +1,41 @@
 package service
 
+import (
+	"context"
+
+	"github.com/ecoderat/dispatch-go/internal/repository"
+	"github.com/ecoderat/dispatch-go/model"
+)
+
 type MessageService interface {
-	Start() error
-	Stop() error
-	GetMessages() ([]string, error)
+	Start(ctx context.Context) error
+	Stop(ctx context.Context) error
+	GetMessages(ctx context.Context) ([]model.Message, error)
 }
 
-type messageService struct{}
-
-func NewMessageService() MessageService {
-	return &messageService{}
+type messageService struct {
+	repository repository.MessageRepository
 }
 
-func (s *messageService) Start() error {
+func NewMessageService(repo repository.MessageRepository) MessageService {
+	return &messageService{
+		repository: repo,
+	}
+}
+
+func (s *messageService) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *messageService) Stop() error {
+func (s *messageService) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (s *messageService) GetMessages() ([]string, error) {
-	messages := []string{"Message 1", "Message 2", "Message 3"}
+func (s *messageService) GetMessages(ctx context.Context) ([]model.Message, error) {
+	messages, err := s.repository.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return messages, nil
 }
