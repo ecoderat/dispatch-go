@@ -2,20 +2,22 @@ package main
 
 import (
 	"log"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"github.com/ecoderat/dispatch-go/internal/controller"
+	"github.com/ecoderat/dispatch-go/internal/driver"
 	"github.com/ecoderat/dispatch-go/internal/repository"
-	"github.com/ecoderat/dispatch-go/internal/service"
+	"github.com/ecoderat/dispatch-go/internal/service/message"
+	"github.com/ecoderat/dispatch-go/internal/service/scheduler"
 	"github.com/ecoderat/dispatch-go/model"
 )
 
 const (
 	PostgresConnectionString = ""
+	ApiURL                   = ""
 )
 
 func main() {
@@ -26,22 +28,16 @@ func main() {
 	db := setupDatabase()
 
 	// Initialize repository, service, and controller
-	messageRepo := repository.NewMessageRepository(db)
-	messageService := service.NewMessageService(messageRepo)
-	ctrl := controller.NewMessageController(messageService)
+	msgRepo := repository.NewMessageRepository(db)
+	msgDriver := driver.NewMessageDriver(ApiURL)
+	msgService := message.New(msgRepo, msgDriver)
+	schedService := scheduler.New(msgService)
+	ctrl := controller.NewMessageController(msgService, schedService)
 
 	// Register routes
 	app.Get("/start", ctrl.Start)
 	app.Get("/stop", ctrl.Stop)
 	app.Get("/messages", ctrl.GetMessages)
-
-	// Start the scheduler
-	ticker := time.NewTicker(2 * time.Minute)
-	go func() {
-		for range ticker.C {
-			log.Println("Processing all unsent messages...")
-		}
-	}()
 
 	app.Listen(":3000")
 }
@@ -62,7 +58,7 @@ func setupDatabase() *gorm.DB {
 	// Seed the database with initial data
 	if err := db.Create(&model.Message{
 		Recipient: "+90555555555",
-		Content:   "Welcome to Dispatch!",
+		Content:   "Welcome to DispatchGo!",
 		Status:    model.StatusPending,
 	}).Error; err != nil {
 		log.Fatalf("Failed to seed database: %v", err)

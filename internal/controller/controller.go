@@ -3,7 +3,8 @@ package controller
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/ecoderat/dispatch-go/internal/service"
+	"github.com/ecoderat/dispatch-go/internal/service/message"
+	"github.com/ecoderat/dispatch-go/internal/service/scheduler"
 )
 
 type MessageController interface {
@@ -13,17 +14,25 @@ type MessageController interface {
 }
 
 type messageController struct {
-	service service.MessageService
+	services services
 }
 
-func NewMessageController(messageService service.MessageService) MessageController {
+type services struct {
+	scheduler scheduler.Scheduler
+	message   message.Service
+}
+
+func NewMessageController(msgService message.Service, schedService scheduler.Scheduler) MessageController {
 	return &messageController{
-		service: messageService,
+		services: services{
+			scheduler: schedService,
+			message:   msgService,
+		},
 	}
 }
 
 func (ctrl *messageController) Start(c *fiber.Ctx) error {
-	err := ctrl.service.Start(c.Context())
+	err := ctrl.services.scheduler.Start(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to start server")
 	}
@@ -32,7 +41,7 @@ func (ctrl *messageController) Start(c *fiber.Ctx) error {
 }
 
 func (ctrl *messageController) Stop(c *fiber.Ctx) error {
-	err := ctrl.service.Stop(c.Context())
+	err := ctrl.services.scheduler.Stop(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to stop server")
 	}
@@ -41,7 +50,7 @@ func (ctrl *messageController) Stop(c *fiber.Ctx) error {
 }
 
 func (ctrl *messageController) GetMessages(c *fiber.Ctx) error {
-	messages, err := ctrl.service.GetMessages(c.Context())
+	messages, err := ctrl.services.message.GetMessages(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to retrieve messages")
 	}
