@@ -1,27 +1,50 @@
 package controller
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
 
-type Controller interface {
+	"github.com/ecoderat/dispatch-go/internal/service"
+)
+
+type MessageController interface {
 	Start(c *fiber.Ctx) error
 	Stop(c *fiber.Ctx) error
 	GetMessages(c *fiber.Ctx) error
 }
 
-type controller struct{}
-
-func NewController() Controller {
-	return &controller{}
+type messageController struct {
+	service service.MessageService
 }
 
-func (r *controller) Start(c *fiber.Ctx) error {
+func NewMessageController(messageService service.MessageService) MessageController {
+	return &messageController{
+		service: messageService,
+	}
+}
+
+func (ctrl *messageController) Start(c *fiber.Ctx) error {
+	err := ctrl.service.Start()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to start server")
+	}
+
 	return c.SendString("Server started")
 }
 
-func (r *controller) Stop(c *fiber.Ctx) error {
+func (ctrl *messageController) Stop(c *fiber.Ctx) error {
+	err := ctrl.service.Stop()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to stop server")
+	}
+
 	return c.SendString("Server stopped")
 }
 
-func (r *controller) GetMessages(c *fiber.Ctx) error {
-	return c.SendString("List of sent messages")
+func (ctrl *messageController) GetMessages(c *fiber.Ctx) error {
+	messages, err := ctrl.service.GetMessages()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString("Failed to retrieve messages")
+	}
+
+	return c.JSON(messages)
 }

@@ -4,14 +4,17 @@ import (
 	"log"
 	"time"
 
-	"github.com/ecoderat/dispatch-go/internal/controller"
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/ecoderat/dispatch-go/internal/controller"
+	"github.com/ecoderat/dispatch-go/internal/service"
 )
 
 func main() {
 	app := fiber.New()
 
-	ctrl := controller.NewController()
+	messageService := service.NewMessageService()
+	ctrl := controller.NewMessageController(messageService)
 
 	// Register routes
 	app.Get("/start", ctrl.Start)
