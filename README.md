@@ -33,11 +33,9 @@ DispatchGo is a Go-based automated SMS dispatch service. It periodically sends u
         cp .env.example .env
         ```
     *   Edit the `.env` file. **Crucially, for the Go application running in Docker to connect to the PostgreSQL container, use the Docker service name as the host:**
-        ```env
-        # .env
-        POSTGRES_CONN_STRING= # For testing/demo, this may not need changing from the sample.
-        API_URL= # For testing, see the [Webhook.site Setup](#simulating-an-sms-provider-with-webhooksite-for-developmenttesting) section below.
-        ```
+        * `POSTGRES_CONN_STRING`: For testing/demo, this may not need changing from the sample.
+        * `API_URL`: The URL for the external SMS provider. For testing, see the [Webhook.site Setup](#simulating-an-sms-provider-with-webhooksite-for-developmenttesting) section below to get a mock URL.
+
     *   Ensure credentials (`user`, `password`, `dbname`) in `POSTGRES_CONN_STRING` match the `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` environment variables for the `postgres` service in your `docker-compose.yml`.
 
 3.  **(Optional, if modifying Go code) Install Go Dependencies for IDE/Native Build:**
