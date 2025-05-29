@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: DispatchGo API
+  description: API for managing SMS dispatch scheduling and messages.
+  version: v1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+tags:
+  - name: Scheduler
+    description: Operations related to the message dispatch scheduler
+  - name: Messages
+    description: Operations related to SMS messages
+
+paths:
+  /start:
+    get:
+      tags:
+        - Scheduler
+      summary: Start the message dispatch scheduler
+      description: Activates the scheduler to begin processing and sending unsent messages.
+      operationId: startScheduler
+      responses:
+        '200':
+          description: Scheduler started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Server started
+        '500':
+          description: Internal server error or scheduler already running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stop:
+    get:
+      tags:
+        - Scheduler
+      summary: Stop the message dispatch scheduler
+      description: Deactivates the scheduler, preventing it from processing further messages.
+      operationId: stopScheduler
+      responses:
+        '200':
+          description: Scheduler stopped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Server stopped
+        '500':
+          description: Internal server error or scheduler not running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /messages:
+    get:
+      tags:
+        - Messages
+      summary: Get a list of sent messages
+      description: Retrieves a list of all sent messages currently stored in the system.
+      operationId: getMessages
+      responses:
+        '200':
+          description: A list of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Message:
+      type: object
+      description: Represents an SMS message
+      properties:
+        id:
+          type: integer
+          example: 1
+        recipient:
+          type: string
+          example: "+12345678901"
+        content:
+          type: string
+          example: "Hello from DispatchGo!"
+        status:
+          type: string
+          example: "sent"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-10-27T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-10-27T10:31:00Z"
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - recipient
+        - content
+        - status
+        - created_at
+        - updated_at
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Internal server error"
+      required:
+        - error
