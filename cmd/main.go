@@ -9,10 +9,10 @@ import (
 
 	"github.com/ecoderat/dispatch-go/internal/controller"
 	"github.com/ecoderat/dispatch-go/internal/driver"
+	"github.com/ecoderat/dispatch-go/internal/model"
 	"github.com/ecoderat/dispatch-go/internal/repository"
 	"github.com/ecoderat/dispatch-go/internal/service/message"
 	"github.com/ecoderat/dispatch-go/internal/service/scheduler"
-	"github.com/ecoderat/dispatch-go/model"
 )
 
 const (

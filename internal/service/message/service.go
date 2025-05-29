@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/ecoderat/dispatch-go/internal/driver"
+	"github.com/ecoderat/dispatch-go/internal/model"
 	"github.com/ecoderat/dispatch-go/internal/repository"
-	"github.com/ecoderat/dispatch-go/model"
 )
 
+//go:generate mockery --name=Service --output=../../../mock/service/message --outpkg=mock_service_message --case=underscore --with-expecter
 type Service interface {
 	GetMessages(ctx context.Context) ([]model.Message, error)
 	SendMessage(ctx context.Context, message MessageRequest) error

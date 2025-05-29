@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+//go:generate mockery --name=MessageDriver --output=../../mock/driver --outpkg=mockdriver --case=underscore --with-expecter
 type MessageDriver interface {
 	Send(ctx context.Context, req MessageRequest) (*MessageResponse, error)
 }
@@ -53,6 +54,10 @@ func (m *messageDriver) Send(ctx context.Context, req MessageRequest) (*MessageR
 		return nil, fmt.Errorf("failed to send http request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusAccepted {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
