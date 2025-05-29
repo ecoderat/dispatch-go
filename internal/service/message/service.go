@@ -58,6 +58,7 @@ func (s *service) GetUnsentMessages(ctx context.Context) ([]model.Message, error
 	}
 
 	s.logger.WithField("count", len(messages)).Info("Fetched unsent messages")
+
 	return messages, nil
 }
 

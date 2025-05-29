@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
@@ -59,6 +60,8 @@ func main() {
 	}
 
 	app := fiber.New()
+	app.Use(cors.New())
+
 	logger.Info("Starting the dispatch-go server...")
 
 	db, err := connectDB(postgresConnectionString, logger)
@@ -74,8 +77,6 @@ func main() {
 		logger.Info("The --fill flag is set. Attempting to populate database with data...")
 		if err := fillDatabaseData(db, logger); err != nil {
 			logger.WithError(err).Error("Failed to populate database with data. Server will continue, but DB might be empty or partially filled.")
-			// if you want the app to exit if --fill fails, uncomment:
-			// logger.WithError(err).Fatal("Exiting due to failure during --fill operation.")
 		} else {
 			logger.Info("Successfully populated database with data due to --fill flag.")
 		}

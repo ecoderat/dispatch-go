@@ -11,6 +11,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	messageLengthLimit = 160
+	multipartThreshold = 153
+)
+
 //go:generate mockery --name=MessageDriver --output=../../mock/driver --outpkg=mockdriver --case=underscore --with-expecter
 type MessageDriver interface {
 	Send(ctx context.Context, req MessageRequest) (*MessageResponse, error)
@@ -50,6 +55,56 @@ func NewMessageDriver(apiURL string, logger *logrus.Logger) MessageDriver {
 }
 
 func (m *messageDriver) Send(ctx context.Context, req MessageRequest) (*MessageResponse, error) {
+	if len(req.Content) > messageLengthLimit {
+		m.logger.Info("Content length exceeds maximum for a single SMS, splitting into multipart SMS.")
+
+		var parts []string
+		for i := 0; i < len(req.Content); i += multipartThreshold {
+			end := i + multipartThreshold
+			// Make sure we don't exceed the length of req.Content
+			if end > len(req.Content) {
+				end = len(req.Content)
+			}
+			parts = append(parts, req.Content[i:end])
+		}
+
+		var lastResp *MessageResponse
+		for partIndex, partContent := range parts {
+			reqTemporary := MessageRequest{
+				Recipient: req.Recipient,
+				Content:   partContent + fmt.Sprintf(" [%d/%d]", partIndex+1, len(parts)),
+			}
+
+			resp, err := m.sendPart(ctx, reqTemporary)
+			if err != nil {
+				m.logger.WithError(err).Errorf("Failed to send part %d of multipart message", partIndex+1)
+				return nil, err
+			}
+			lastResp = resp
+		}
+
+		m.logger.WithFields(logrus.Fields{
+			"recipient": req.Recipient,
+			"parts":     len(parts),
+		}).Info("Multipart message sent successfully")
+
+		return lastResp, nil
+	}
+
+	resp, err := m.sendPart(ctx, req)
+	if err != nil {
+		m.logger.WithError(err).Error("Failed to send message")
+		return nil, err
+	}
+
+	m.logger.WithFields(logrus.Fields{
+		"recipient": req.Recipient,
+	}).Info("Message sent successfully")
+
+	return resp, nil
+}
+
+func (m *messageDriver) sendPart(ctx context.Context, req MessageRequest) (*MessageResponse, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		m.logger.WithError(err).Error(ErrMarshalRequest)
@@ -91,7 +146,7 @@ func (m *messageDriver) Send(ctx context.Context, req MessageRequest) (*MessageR
 	m.logger.WithFields(logrus.Fields{
 		"recipient":  req.Recipient,
 		"message_id": messageResp.MessageID,
-	}).Info("Message sent successfully via driver")
+	}).Info("Message part sent successfully via driver")
 
 	return &messageResp, nil
 }

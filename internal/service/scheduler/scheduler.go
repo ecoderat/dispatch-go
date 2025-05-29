@@ -109,7 +109,7 @@ func (s *scheduler) processMessages() error {
 	}
 
 	for _, msg := range messages {
-		err := s.messageService.SendMessage(context.TODO(), message.MessageRequest{
+		err = s.messageService.SendMessage(context.TODO(), message.MessageRequest{
 			Recipient: msg.Recipient,
 			Content:   msg.Content,
 		})
