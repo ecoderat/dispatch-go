@@ -36,7 +36,7 @@ DispatchGo is a Go-based automated SMS dispatch service. It periodically sends u
         ```env
         # .env
         POSTGRES_CONN_STRING= # For testing/demo, this may not need changing from the sample.
-        API_URL= # See webhook.site section.
+        API_URL= # For testing, see the [Webhook.site Setup](#simulating-an-sms-provider-with-webhooksite-for-developmenttesting) section below.
         ```
     *   Ensure credentials (`user`, `password`, `dbname`) in `POSTGRES_CONN_STRING` match the `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` environment variables for the `postgres` service in your `docker-compose.yml`.
 
@@ -115,12 +115,6 @@ The `Makefile` primarily uses Docker Compose to build, run, and manage all appli
     make swagger-down
     ```
 
-## Other Key Makefile Commands
-
-*   **`make db-start` / `make db-stop`**: Manage the PostgreSQL container independently.
-*   **`make restart` / `make restart-fill`**: Convenience for `make down` then `make up` (or `up-fill`).
-*   **`make help`**: Displays a detailed list of all available `Makefile` commands and their descriptions for both Dockerized and Native Go workflows.
-
 ## Native Go Development (Optional Workflow)
 
 For developers actively working on the Go code who prefer direct host execution for faster iteration or debugging:
@@ -130,6 +124,48 @@ For developers actively working on the Go code who prefer direct host execution 
 *   **`make native-run-fill`**: Runs the native Go app with the `--fill` flag.
 *   **`make native-clean`**: Cleans native build artifacts.
 
+## Other Key Makefile Commands
+
+*   **`make help`**: Displays a detailed list of all available `Makefile` commands and their descriptions for both Dockerized and Native Go workflows.
+
+## Simulating an SMS Provider with Webhook.site (for Development/Testing)
+
+To test the SMS sending functionality without integrating with a real SMS provider, you can use [webhook.site](https://webhook.site/). This service provides a temporary, unique URL that can receive HTTP requests, allowing you to inspect what your application sends.
+
+**Steps to set up Webhook.site as your mock SMS API:**
+
+1.  **Visit Webhook.site:**
+    Open [https://webhook.site/](https://webhook.site/) in your web browser.
+    A unique URL will be automatically generated for you (e.g., `https://webhook.site/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
+
+2.  **Copy Your Unique URL:**
+    This is the URL your application will send SMS API requests to. Copy it immediately.
+    It will look like: `https://webhook.site/YOUR_UNIQUE_ID`
+
+3.  **Configure the Response:**
+    To make webhook.site behave more like a real API that acknowledges requests, you can customize its response:
+    *   On the webhook.site page for your unique URL, find the **"Edit"** button or section (usually in the top-right area).
+    *   Set the following default response parameters:
+        *   **Status Code:** `202` (Accepted - common for asynchronous operations like sending an SMS)
+        *   **Content type:** `application/json`
+        *   **Content (Body):**
+            ```json
+            {
+              "message": "Accepted for delivery",
+              "messageId": "$request.uuid$"
+            }
+            ```
+            *   `$request.uuid$` is a special webhook.site variable that will insert a unique ID for each request received, simulating a message ID from a provider.
+    *   Save these changes on webhook.site.
+
+4.  **Update Your `.env` File:**
+    *   Open your project's `.env` file.
+    *   Set the `API_URL` variable to the unique URL you copied from webhook.site:
+        ```env
+        # .env
+        # ...
+        API_URL="https://webhook.site/YOUR_UNIQUE_ID_YOU_COPIED"
+        ```
 
 ## Troubleshooting
 
