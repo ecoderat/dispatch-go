@@ -10,7 +10,9 @@ import (
 
 //go:generate mockery --name=Service --output=../../../mock/service/message --outpkg=mock_service_message --case=underscore --with-expecter
 type Service interface {
-	GetMessages(ctx context.Context) ([]model.Message, error)
+	GetUnsentMessages(ctx context.Context) ([]model.Message, error)
+	GetSentMessages(ctx context.Context) ([]model.Message, error)
+	UpdateMessage(ctx context.Context, id int, status model.MessageStatus) error
 	SendMessage(ctx context.Context, message MessageRequest) error
 }
 
@@ -26,8 +28,17 @@ func New(repo repository.MessageRepository, driver driver.MessageDriver) Service
 	}
 }
 
-func (s *service) GetMessages(ctx context.Context) ([]model.Message, error) {
-	messages, err := s.repository.GetAll(ctx)
+func (s *service) GetSentMessages(ctx context.Context) ([]model.Message, error) {
+	messages, err := s.repository.GetAll(ctx, model.StatusSent)
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}
+
+func (s *service) GetUnsentMessages(ctx context.Context) ([]model.Message, error) {
+	messages, err := s.repository.GetAll(ctx, model.StatusPending, model.StatusFailed)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +49,15 @@ func (s *service) GetMessages(ctx context.Context) ([]model.Message, error) {
 type MessageRequest struct {
 	Recipient string `json:"recipient"`
 	Content   string `json:"content"`
+}
+
+func (s *service) UpdateMessage(ctx context.Context, id int, status model.MessageStatus) error {
+	err := s.repository.Update(ctx, id, status)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *service) SendMessage(ctx context.Context, message MessageRequest) error {

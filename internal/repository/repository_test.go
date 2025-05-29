@@ -40,6 +40,30 @@ func TestMessageRepository_GetAll(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestMessageRepository_GetAll_WithStatus(t *testing.T) {
+	db, mock, cleanup := setupTestDB(t)
+	defer cleanup()
+	repo := NewMessageRepository(db)
+
+	query := `SELECT * FROM "message" WHERE status IN ($1,$2) AND "message"."deleted_at" IS NULL`
+
+	rows := sqlmock.NewRows([]string{"id", "recipient", "content", "status"}).
+		AddRow(1, "+123", "hi", "pending").
+		AddRow(2, "+456", "hello", "failed")
+	mock.ExpectQuery(query).WithArgs("pending", "failed").WillReturnRows(rows)
+
+	msgs, err := repo.GetAll(context.Background(), model.StatusPending, model.StatusFailed)
+	assert.NoError(t, err)
+	assert.Len(t, msgs, 2)
+	assert.Equal(t, "+123", msgs[0].Recipient)
+	assert.Equal(t, "hi", msgs[0].Content)
+	assert.Equal(t, "pending", string(msgs[0].Status))
+	assert.Equal(t, "+456", msgs[1].Recipient)
+	assert.Equal(t, "hello", msgs[1].Content)
+	assert.Equal(t, "failed", string(msgs[1].Status))
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestMessageRepository_GetAll_Fails(t *testing.T) {
 	db, mock, cleanup := setupTestDB(t)
 	defer cleanup()

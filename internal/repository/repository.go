@@ -13,7 +13,7 @@ type MessageRepository interface {
 	Create(ctx context.Context, message model.Message) error
 	Update(ctx context.Context, id int, status model.MessageStatus) error
 	Delete(ctx context.Context, id int) error
-	GetAll(ctx context.Context) ([]model.Message, error)
+	GetAll(ctx context.Context, status ...model.MessageStatus) ([]model.Message, error)
 }
 
 type messageRepository struct {
@@ -45,12 +45,15 @@ func (r *messageRepository) Delete(ctx context.Context, id int) error {
 		Error
 }
 
-func (r *messageRepository) GetAll(ctx context.Context) ([]model.Message, error) {
+func (r *messageRepository) GetAll(ctx context.Context, status ...model.MessageStatus) ([]model.Message, error) {
 	var messages []model.Message
+	query := r.db.WithContext(ctx)
 
-	err := r.db.WithContext(ctx).
-		Find(&messages).
-		Error
+	if len(status) > 0 {
+		query = query.Where("status IN ?", status)
+	}
+
+	err := query.Find(&messages).Error
 	if err != nil {
 		return nil, err
 	}

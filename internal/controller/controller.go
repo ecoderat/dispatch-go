@@ -50,7 +50,7 @@ func (ctrl *messageController) Stop(c *fiber.Ctx) error {
 }
 
 func (ctrl *messageController) GetMessages(c *fiber.Ctx) error {
-	messages, err := ctrl.services.message.GetMessages(c.Context())
+	messages, err := ctrl.services.message.GetSentMessages(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Failed to retrieve messages")
 	}

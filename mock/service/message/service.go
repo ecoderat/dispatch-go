@@ -24,12 +24,12 @@ func (_m *Service) EXPECT() *Service_Expecter {
 	return &Service_Expecter{mock: &_m.Mock}
 }
 
-// GetMessages provides a mock function with given fields: ctx
-func (_m *Service) GetMessages(ctx context.Context) ([]model.Message, error) {
+// GetSentMessages provides a mock function with given fields: ctx
+func (_m *Service) GetSentMessages(ctx context.Context) ([]model.Message, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetMessages")
+		panic("no return value specified for GetSentMessages")
 	}
 
 	var r0 []model.Message
@@ -54,30 +54,88 @@ func (_m *Service) GetMessages(ctx context.Context) ([]model.Message, error) {
 	return r0, r1
 }
 
-// Service_GetMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMessages'
-type Service_GetMessages_Call struct {
+// Service_GetSentMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSentMessages'
+type Service_GetSentMessages_Call struct {
 	*mock.Call
 }
 
-// GetMessages is a helper method to define mock.On call
+// GetSentMessages is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Service_Expecter) GetMessages(ctx interface{}) *Service_GetMessages_Call {
-	return &Service_GetMessages_Call{Call: _e.mock.On("GetMessages", ctx)}
+func (_e *Service_Expecter) GetSentMessages(ctx interface{}) *Service_GetSentMessages_Call {
+	return &Service_GetSentMessages_Call{Call: _e.mock.On("GetSentMessages", ctx)}
 }
 
-func (_c *Service_GetMessages_Call) Run(run func(ctx context.Context)) *Service_GetMessages_Call {
+func (_c *Service_GetSentMessages_Call) Run(run func(ctx context.Context)) *Service_GetSentMessages_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *Service_GetMessages_Call) Return(_a0 []model.Message, _a1 error) *Service_GetMessages_Call {
+func (_c *Service_GetSentMessages_Call) Return(_a0 []model.Message, _a1 error) *Service_GetSentMessages_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Service_GetMessages_Call) RunAndReturn(run func(context.Context) ([]model.Message, error)) *Service_GetMessages_Call {
+func (_c *Service_GetSentMessages_Call) RunAndReturn(run func(context.Context) ([]model.Message, error)) *Service_GetSentMessages_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUnsentMessages provides a mock function with given fields: ctx
+func (_m *Service) GetUnsentMessages(ctx context.Context) ([]model.Message, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUnsentMessages")
+	}
+
+	var r0 []model.Message
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]model.Message, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []model.Message); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]model.Message)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Service_GetUnsentMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUnsentMessages'
+type Service_GetUnsentMessages_Call struct {
+	*mock.Call
+}
+
+// GetUnsentMessages is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Service_Expecter) GetUnsentMessages(ctx interface{}) *Service_GetUnsentMessages_Call {
+	return &Service_GetUnsentMessages_Call{Call: _e.mock.On("GetUnsentMessages", ctx)}
+}
+
+func (_c *Service_GetUnsentMessages_Call) Run(run func(ctx context.Context)) *Service_GetUnsentMessages_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Service_GetUnsentMessages_Call) Return(_a0 []model.Message, _a1 error) *Service_GetUnsentMessages_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Service_GetUnsentMessages_Call) RunAndReturn(run func(context.Context) ([]model.Message, error)) *Service_GetUnsentMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -125,6 +183,54 @@ func (_c *Service_SendMessage_Call) Return(_a0 error) *Service_SendMessage_Call 
 }
 
 func (_c *Service_SendMessage_Call) RunAndReturn(run func(context.Context, message.MessageRequest) error) *Service_SendMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateMessage provides a mock function with given fields: ctx, id, status
+func (_m *Service) UpdateMessage(ctx context.Context, id int, status model.MessageStatus) error {
+	ret := _m.Called(ctx, id, status)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateMessage")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, model.MessageStatus) error); ok {
+		r0 = rf(ctx, id, status)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Service_UpdateMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateMessage'
+type Service_UpdateMessage_Call struct {
+	*mock.Call
+}
+
+// UpdateMessage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id int
+//   - status model.MessageStatus
+func (_e *Service_Expecter) UpdateMessage(ctx interface{}, id interface{}, status interface{}) *Service_UpdateMessage_Call {
+	return &Service_UpdateMessage_Call{Call: _e.mock.On("UpdateMessage", ctx, id, status)}
+}
+
+func (_c *Service_UpdateMessage_Call) Run(run func(ctx context.Context, id int, status model.MessageStatus)) *Service_UpdateMessage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int), args[2].(model.MessageStatus))
+	})
+	return _c
+}
+
+func (_c *Service_UpdateMessage_Call) Return(_a0 error) *Service_UpdateMessage_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Service_UpdateMessage_Call) RunAndReturn(run func(context.Context, int, model.MessageStatus) error) *Service_UpdateMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }

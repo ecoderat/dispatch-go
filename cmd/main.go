@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -38,6 +39,11 @@ func main() {
 	app.Get("/start", ctrl.Start)
 	app.Get("/stop", ctrl.Stop)
 	app.Get("/messages", ctrl.GetMessages)
+
+	// Start scheduler automatically
+	if err := schedService.Start(context.Background()); err != nil {
+		log.Fatalf("Failed to start scheduler: %v", err)
+	}
 
 	app.Listen(":3000")
 }

@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/ecoderat/dispatch-go/internal/model"
 	"github.com/ecoderat/dispatch-go/internal/service/message"
 )
 
@@ -47,7 +48,11 @@ func (s *scheduler) Start(ctx context.Context) error {
 	s.ticker = time.NewTicker(DefaultTickerDuration)
 	s.running = true
 	errChan := make(chan error)
+	// Immediately process messages on start
 	go func() {
+		if err := s.processMessages(); err != nil {
+			errChan <- err
+		}
 		for {
 			select {
 			case <-s.ticker.C:
@@ -87,7 +92,7 @@ func (s *scheduler) Stop(ctx context.Context) error {
 }
 
 func (s *scheduler) processMessages() error {
-	messages, err := s.messageService.GetMessages(context.TODO())
+	messages, err := s.messageService.GetUnsentMessages(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -99,8 +104,26 @@ func (s *scheduler) processMessages() error {
 		})
 		if err != nil {
 			log.Printf("Failed to send message to %s: %v", msg.Recipient, err)
+
+			err = s.messageService.UpdateMessage(context.TODO(), msg.ID, model.StatusFailed)
+			if err != nil {
+				log.Printf("Failed to update message status for %d: %v", msg.ID, err)
+				continue
+			}
+
 			continue
 		}
+
+		log.Printf("Message sent to %s successfully", msg.Recipient)
+
+		err = s.messageService.UpdateMessage(context.TODO(), msg.ID, model.StatusSent)
+		if err != nil {
+			log.Printf("Failed to update message status for %d: %v", msg.ID, err)
+			continue
+		}
+
+		log.Printf("Message status updated for %d", msg.ID)
+
 	}
 
 	return nil

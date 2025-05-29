@@ -116,9 +116,16 @@ func (_c *MessageRepository_Delete_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
-// GetAll provides a mock function with given fields: ctx
-func (_m *MessageRepository) GetAll(ctx context.Context) ([]model.Message, error) {
-	ret := _m.Called(ctx)
+// GetAll provides a mock function with given fields: ctx, status
+func (_m *MessageRepository) GetAll(ctx context.Context, status ...model.MessageStatus) ([]model.Message, error) {
+	_va := make([]interface{}, len(status))
+	for _i := range status {
+		_va[_i] = status[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
@@ -126,19 +133,19 @@ func (_m *MessageRepository) GetAll(ctx context.Context) ([]model.Message, error
 
 	var r0 []model.Message
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]model.Message, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, ...model.MessageStatus) ([]model.Message, error)); ok {
+		return rf(ctx, status...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []model.Message); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, ...model.MessageStatus) []model.Message); ok {
+		r0 = rf(ctx, status...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]model.Message)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, ...model.MessageStatus) error); ok {
+		r1 = rf(ctx, status...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -153,13 +160,21 @@ type MessageRepository_GetAll_Call struct {
 
 // GetAll is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MessageRepository_Expecter) GetAll(ctx interface{}) *MessageRepository_GetAll_Call {
-	return &MessageRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx)}
+//   - status ...model.MessageStatus
+func (_e *MessageRepository_Expecter) GetAll(ctx interface{}, status ...interface{}) *MessageRepository_GetAll_Call {
+	return &MessageRepository_GetAll_Call{Call: _e.mock.On("GetAll",
+		append([]interface{}{ctx}, status...)...)}
 }
 
-func (_c *MessageRepository_GetAll_Call) Run(run func(ctx context.Context)) *MessageRepository_GetAll_Call {
+func (_c *MessageRepository_GetAll_Call) Run(run func(ctx context.Context, status ...model.MessageStatus)) *MessageRepository_GetAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		variadicArgs := make([]model.MessageStatus, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(model.MessageStatus)
+			}
+		}
+		run(args[0].(context.Context), variadicArgs...)
 	})
 	return _c
 }
@@ -169,7 +184,7 @@ func (_c *MessageRepository_GetAll_Call) Return(_a0 []model.Message, _a1 error) 
 	return _c
 }
 
-func (_c *MessageRepository_GetAll_Call) RunAndReturn(run func(context.Context) ([]model.Message, error)) *MessageRepository_GetAll_Call {
+func (_c *MessageRepository_GetAll_Call) RunAndReturn(run func(context.Context, ...model.MessageStatus) ([]model.Message, error)) *MessageRepository_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
