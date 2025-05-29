@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DefaultTickerDuration = 20 * time.Second
+	defaultTickerDuration = 20 * time.Second
 )
 
 var (
@@ -42,7 +42,7 @@ func New(messageService message.Service, logger *logrus.Logger) Scheduler {
 		messageService: messageService,
 		ctx:            ctx,
 		cancel:         cancel,
-		ticker:         time.NewTicker(DefaultTickerDuration),
+		ticker:         time.NewTicker(defaultTickerDuration),
 		running:        false,
 		logger:         logger,
 	}
@@ -55,7 +55,7 @@ func (s *scheduler) Start(ctx context.Context) error {
 	}
 
 	s.ctx, s.cancel = context.WithCancel(context.Background())
-	s.ticker = time.NewTicker(DefaultTickerDuration)
+	s.ticker = time.NewTicker(defaultTickerDuration)
 	s.running = true
 	errChan := make(chan error)
 	// Immediately process messages on start

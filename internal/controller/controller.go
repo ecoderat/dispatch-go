@@ -34,7 +34,7 @@ func NewMessageController(msgService message.Service, schedService scheduler.Sch
 func (ctrl *messageController) Start(c *fiber.Ctx) error {
 	err := ctrl.services.scheduler.Start(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Failed to start server")
+		return c.Status(fiber.StatusInternalServerError).SendString("Unable to start the scheduler")
 	}
 
 	return c.SendString("Server started")
@@ -43,7 +43,7 @@ func (ctrl *messageController) Start(c *fiber.Ctx) error {
 func (ctrl *messageController) Stop(c *fiber.Ctx) error {
 	err := ctrl.services.scheduler.Stop(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Failed to stop server")
+		return c.Status(fiber.StatusInternalServerError).SendString("Unable to stop the scheduler")
 	}
 
 	return c.SendString("Server stopped")
@@ -52,7 +52,7 @@ func (ctrl *messageController) Stop(c *fiber.Ctx) error {
 func (ctrl *messageController) GetMessages(c *fiber.Ctx) error {
 	messages, err := ctrl.services.message.GetSentMessages(c.Context())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString("Failed to retrieve messages")
+		return c.Status(fiber.StatusInternalServerError).SendString("Unable to fetch sent messages")
 	}
 
 	return c.JSON(messages)
