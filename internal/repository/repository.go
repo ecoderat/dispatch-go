@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ecoderat/dispatch-go/internal/model"
+	"github.com/sirupsen/logrus"
 )
 
 //go:generate mockery --name=MessageRepository --output=../../mock/repository --outpkg=mockrepository --case=underscore --with-expecter
@@ -17,12 +18,14 @@ type MessageRepository interface {
 }
 
 type messageRepository struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *logrus.Logger
 }
 
-func NewMessageRepository(db *gorm.DB) MessageRepository {
+func NewMessageRepository(db *gorm.DB, logger *logrus.Logger) MessageRepository {
 	return &messageRepository{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }
 

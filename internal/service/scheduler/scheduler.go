@@ -2,15 +2,23 @@ package scheduler
 
 import (
 	"context"
-	"log"
+	"errors"
 	"time"
 
 	"github.com/ecoderat/dispatch-go/internal/model"
 	"github.com/ecoderat/dispatch-go/internal/service/message"
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	DefaultTickerDuration = 20 * time.Second
+)
+
+var (
+	ErrSchedulerStop       = errors.New("scheduler: failed to stop previous instance")
+	ErrProcessMessages     = errors.New("scheduler: failed to process messages")
+	ErrSendMessage         = errors.New("scheduler: failed to send message")
+	ErrUpdateMessageStatus = errors.New("scheduler: failed to update message status")
 )
 
 type Scheduler interface {
@@ -19,15 +27,16 @@ type Scheduler interface {
 }
 
 type scheduler struct {
-	messageService message.Service
-
 	ctx     context.Context
 	cancel  context.CancelFunc
 	ticker  *time.Ticker
 	running bool
+
+	messageService message.Service
+	logger         *logrus.Logger
 }
 
-func New(messageService message.Service) Scheduler {
+func New(messageService message.Service, logger *logrus.Logger) Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &scheduler{
 		messageService: messageService,
@@ -35,13 +44,14 @@ func New(messageService message.Service) Scheduler {
 		cancel:         cancel,
 		ticker:         time.NewTicker(DefaultTickerDuration),
 		running:        false,
+		logger:         logger,
 	}
 }
 
 func (s *scheduler) Start(ctx context.Context) error {
 	err := s.Stop(ctx) // Stop any previous instance before starting a new one
 	if err != nil {
-		log.Printf("Error stopping previous scheduler: %v", err)
+		s.logger.WithError(err).Error(ErrSchedulerStop)
 	}
 
 	s.ctx, s.cancel = context.WithCancel(context.Background())
@@ -74,7 +84,7 @@ func (s *scheduler) Start(ctx context.Context) error {
 	// Error logging goroutine
 	go func() {
 		for err := range errChan {
-			log.Printf("Error processing messages: %v", err)
+			s.logger.WithError(err).Error(ErrProcessMessages)
 		}
 	}()
 
@@ -94,7 +104,8 @@ func (s *scheduler) Stop(ctx context.Context) error {
 func (s *scheduler) processMessages() error {
 	messages, err := s.messageService.GetUnsentMessages(context.TODO())
 	if err != nil {
-		return err
+		s.logger.WithError(err).Error(ErrProcessMessages)
+		return ErrProcessMessages
 	}
 
 	for _, msg := range messages {
@@ -103,27 +114,24 @@ func (s *scheduler) processMessages() error {
 			Content:   msg.Content,
 		})
 		if err != nil {
-			log.Printf("Failed to send message to %s: %v", msg.Recipient, err)
-
+			s.logger.WithFields(logrus.Fields{"recipient": msg.Recipient, "id": msg.ID}).WithError(err).Error(ErrSendMessage)
 			err = s.messageService.UpdateMessage(context.TODO(), msg.ID, model.StatusFailed)
 			if err != nil {
-				log.Printf("Failed to update message status for %d: %v", msg.ID, err)
+				s.logger.WithFields(logrus.Fields{"id": msg.ID}).WithError(err).Error(ErrUpdateMessageStatus)
 				continue
 			}
-
 			continue
 		}
 
-		log.Printf("Message sent to %s successfully", msg.Recipient)
+		s.logger.WithFields(logrus.Fields{"recipient": msg.Recipient, "id": msg.ID}).Info("Message sent successfully")
 
 		err = s.messageService.UpdateMessage(context.TODO(), msg.ID, model.StatusSent)
 		if err != nil {
-			log.Printf("Failed to update message status for %d: %v", msg.ID, err)
+			s.logger.WithFields(logrus.Fields{"id": msg.ID}).WithError(err).Error(ErrUpdateMessageStatus)
 			continue
 		}
 
-		log.Printf("Message status updated for %d", msg.ID)
-
+		s.logger.WithFields(logrus.Fields{"id": msg.ID}).Info("Message status updated to sent")
 	}
 
 	return nil

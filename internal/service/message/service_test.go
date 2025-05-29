@@ -9,13 +9,15 @@ import (
 	"github.com/ecoderat/dispatch-go/internal/model"
 	mockdriver "github.com/ecoderat/dispatch-go/mock/driver"
 	mockrepo "github.com/ecoderat/dispatch-go/mock/repository"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestService_GetUnsentMessages_Success(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	messages := []model.Message{{ID: 1, Recipient: "+123", Content: "hi", Status: "pending"}}
@@ -29,7 +31,8 @@ func TestService_GetUnsentMessages_Success(t *testing.T) {
 func TestService_GetUnsentMessages_Fails(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	repo.EXPECT().GetAll(ctx, model.StatusPending, model.StatusFailed).Return(nil, errors.New("db error"))
@@ -42,7 +45,8 @@ func TestService_GetUnsentMessages_Fails(t *testing.T) {
 func TestService_SendMessage_Success(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	msgReq := MessageRequest{Recipient: "+123", Content: "hi"}
@@ -55,7 +59,8 @@ func TestService_SendMessage_Success(t *testing.T) {
 func TestService_SendMessage_Fails(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	msgReq := MessageRequest{Recipient: "+123", Content: "hi"}
@@ -69,7 +74,8 @@ func TestService_SendMessage_Fails(t *testing.T) {
 func TestService_GetSentMessages_Success(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	messages := []model.Message{{ID: 1, Recipient: "+123", Content: "hi", Status: "sent"}}
@@ -83,7 +89,8 @@ func TestService_GetSentMessages_Success(t *testing.T) {
 func TestService_GetSentMessages_Fails(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	repo.EXPECT().GetAll(ctx, model.StatusSent).Return(nil, errors.New("db error"))
@@ -96,7 +103,8 @@ func TestService_GetSentMessages_Fails(t *testing.T) {
 func TestService_UpdateMessage_Success(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	repo.EXPECT().Update(ctx, 1, model.StatusSent).Return(nil)
@@ -108,7 +116,8 @@ func TestService_UpdateMessage_Success(t *testing.T) {
 func TestService_UpdateMessage_Fails(t *testing.T) {
 	repo := mockrepo.NewMessageRepository(t)
 	drv := mockdriver.NewMessageDriver(t)
-	svc := New(repo, drv)
+	logger := &logrus.Logger{}
+	svc := New(repo, drv, logger)
 
 	ctx := context.Background()
 	repo.EXPECT().Update(ctx, 1, model.StatusSent).Return(errors.New("update error"))

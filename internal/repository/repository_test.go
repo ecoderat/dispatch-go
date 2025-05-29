@@ -6,6 +6,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ecoderat/dispatch-go/internal/model"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -23,7 +24,8 @@ func setupTestDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock, func()) {
 func TestMessageRepository_GetAll(t *testing.T) {
 	db, mock, cleanup := setupTestDB(t)
 	defer cleanup()
-	repo := NewMessageRepository(db)
+	logger := &logrus.Logger{}
+	repo := NewMessageRepository(db, logger)
 
 	query := `SELECT * FROM "message" WHERE "message"."deleted_at" IS NULL`
 
@@ -43,7 +45,8 @@ func TestMessageRepository_GetAll(t *testing.T) {
 func TestMessageRepository_GetAll_WithStatus(t *testing.T) {
 	db, mock, cleanup := setupTestDB(t)
 	defer cleanup()
-	repo := NewMessageRepository(db)
+	logger := &logrus.Logger{}
+	repo := NewMessageRepository(db, logger)
 
 	query := `SELECT * FROM "message" WHERE status IN ($1,$2) AND "message"."deleted_at" IS NULL`
 
@@ -67,7 +70,8 @@ func TestMessageRepository_GetAll_WithStatus(t *testing.T) {
 func TestMessageRepository_GetAll_Fails(t *testing.T) {
 	db, mock, cleanup := setupTestDB(t)
 	defer cleanup()
-	repo := NewMessageRepository(db)
+	logger := &logrus.Logger{}
+	repo := NewMessageRepository(db, logger)
 
 	query := `SELECT * FROM "message" WHERE "message"."deleted_at" IS NULL`
 
@@ -82,13 +86,21 @@ func TestMessageRepository_GetAll_Fails(t *testing.T) {
 func TestMessageRepository_Create(t *testing.T) {
 	db, mock, cleanup := setupTestDB(t)
 	defer cleanup()
-	repo := NewMessageRepository(db)
+	logger := &logrus.Logger{}
+	repo := NewMessageRepository(db, logger)
 
 	query := `INSERT INTO "message" ("recipient","content","status","created_at","updated_at","deleted_at") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`
 
 	msg := model.Message{Recipient: "+123", Content: "hi", Status: "pending"}
 	mock.ExpectBegin()
-	mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(query).WithArgs(
+		msg.Recipient,
+		msg.Content,
+		string(msg.Status),
+		sqlmock.AnyArg(), // created_at
+		sqlmock.AnyArg(), // updated_at
+		sqlmock.AnyArg(), // deleted_at
+	).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectCommit()
 
 	err := repo.Create(context.Background(), msg)
@@ -99,7 +111,8 @@ func TestMessageRepository_Create(t *testing.T) {
 func TestMessageRepository_Update(t *testing.T) {
 	db, mock, cleanup := setupTestDB(t)
 	defer cleanup()
-	repo := NewMessageRepository(db)
+	logger := &logrus.Logger{}
+	repo := NewMessageRepository(db, logger)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`UPDATE "message" SET "status"=$1,"updated_at"=$2 WHERE id = $3 AND "message"."deleted_at" IS NULL`).
@@ -115,7 +128,8 @@ func TestMessageRepository_Update(t *testing.T) {
 func TestMessageRepository_Delete(t *testing.T) {
 	db, mock, cleanup := setupTestDB(t)
 	defer cleanup()
-	repo := NewMessageRepository(db)
+	logger := &logrus.Logger{}
+	repo := NewMessageRepository(db, logger)
 
 	query := `UPDATE "message" SET "deleted_at"=$1 WHERE id = $2 AND "message"."deleted_at" IS NULL`
 	messageID := 1

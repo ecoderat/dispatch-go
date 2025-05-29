@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -21,18 +23,30 @@ const (
 	ApiURL                   = ""
 )
 
+var (
+	ErrDBConnection   = errors.New("failed to connect to the database")
+	ErrDBMigration    = errors.New("failed to migrate database schema")
+	ErrDBSeed         = errors.New("failed to seed database")
+	ErrSchedulerStart = errors.New("failed to start scheduler")
+)
+
 func main() {
+	logger := logrus.New()
+	logger.SetOutput(os.Stdout)
+	logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	logger.SetLevel(logrus.InfoLevel)
+
 	app := fiber.New()
-	log.Println("Starting the dispatch-go server...")
+	logger.Info("Starting the dispatch-go server...")
 
 	// Setup database connection
-	db := setupDatabase()
+	db := setupDatabase(logger)
 
 	// Initialize repository, service, and controller
-	msgRepo := repository.NewMessageRepository(db)
-	msgDriver := driver.NewMessageDriver(ApiURL)
-	msgService := message.New(msgRepo, msgDriver)
-	schedService := scheduler.New(msgService)
+	msgRepo := repository.NewMessageRepository(db, logger)
+	msgDriver := driver.NewMessageDriver(ApiURL, logger)
+	msgService := message.New(msgRepo, msgDriver, logger)
+	schedService := scheduler.New(msgService, logger)
 	ctrl := controller.NewMessageController(msgService, schedService)
 
 	// Register routes
@@ -42,24 +56,24 @@ func main() {
 
 	// Start scheduler automatically
 	if err := schedService.Start(context.Background()); err != nil {
-		log.Fatalf("Failed to start scheduler: %v", err)
+		logger.WithError(err).Fatal(ErrSchedulerStart)
 	}
 
 	app.Listen(":3000")
 }
 
-func setupDatabase() *gorm.DB {
+func setupDatabase(logger *logrus.Logger) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(PostgresConnectionString))
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		logger.WithError(err).Fatal(ErrDBConnection)
 	}
-	log.Println("Connected to the database successfully")
+	logger.Info("Connected to the database successfully")
 
 	// Migrate the schema
 	if err := db.AutoMigrate(&model.Message{}); err != nil {
-		log.Fatalf("Failed to migrate database schema: %v", err)
+		logger.WithError(err).Fatal(ErrDBMigration)
 	}
-	log.Println("Database schema migrated successfully")
+	logger.Info("Database schema migrated successfully")
 
 	// Seed the database with initial data
 	if err := db.Create(&model.Message{
@@ -67,9 +81,9 @@ func setupDatabase() *gorm.DB {
 		Content:   "Welcome to DispatchGo!",
 		Status:    model.StatusPending,
 	}).Error; err != nil {
-		log.Fatalf("Failed to seed database: %v", err)
+		logger.WithError(err).Fatal(ErrDBSeed)
 	}
-	log.Println("Database seeded with initial data successfully")
+	logger.Info("Database seeded with initial data successfully")
 
 	return db
 }
