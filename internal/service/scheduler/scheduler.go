@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultTickerDuration = 20 * time.Second
+	defaultTickerDuration = 2 * time.Minute
 )
 
 var (
