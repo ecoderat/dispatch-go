@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -18,12 +19,10 @@ import (
 	"github.com/ecoderat/dispatch-go/internal/service/scheduler"
 )
 
-const (
-	PostgresConnectionString = ""
-	ApiURL                   = ""
-)
-
 var (
+	PostgresConnectionString string
+	ApiURL                   string
+
 	ErrDBConnection   = errors.New("failed to connect to the database")
 	ErrDBMigration    = errors.New("failed to migrate database schema")
 	ErrDBSeed         = errors.New("failed to seed database")
@@ -35,6 +34,18 @@ func main() {
 	logger.SetOutput(os.Stdout)
 	logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
 	logger.SetLevel(logrus.InfoLevel)
+
+	// Load environment variables from .env file
+	if err := loadEnv(logger); err != nil {
+		logger.WithError(err).Fatal("Failed to load environment variables from .env file")
+	}
+
+	// Read config from environment
+	PostgresConnectionString = os.Getenv("POSTGRES_CONN_STRING")
+	ApiURL = os.Getenv("API_URL")
+	if PostgresConnectionString == "" || ApiURL == "" {
+		logger.Fatal("POSTGRES_CONN_STRING and API_URL must be set in environment variables or .env file")
+	}
 
 	app := fiber.New()
 	logger.Info("Starting the dispatch-go server...")
@@ -86,4 +97,13 @@ func setupDatabase(logger *logrus.Logger) *gorm.DB {
 	logger.Info("Database seeded with initial data successfully")
 
 	return db
+}
+
+func loadEnv(logger *logrus.Logger) error {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		return err
+	}
+	logger.Info("Environment variables loaded successfully from .env file")
+	return nil
 }
